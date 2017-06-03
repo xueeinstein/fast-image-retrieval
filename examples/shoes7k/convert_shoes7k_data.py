@@ -12,8 +12,9 @@ import config
 
 IM_HEIGHT = 227
 IM_WIDTH = 227
-TRAIN_LMDB = 'shoes7k_train_lmdb'
-TEST_LMDB = 'shoes7k_test_lmdb'
+SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+TRAIN_LMDB = os.path.join(SCRIPT_PATH, 'shoes7k_train_lmdb')
+TEST_LMDB = os.path.join(SCRIPT_PATH, 'shoes7k_test_lmdb')
 
 
 def get_images(path):
