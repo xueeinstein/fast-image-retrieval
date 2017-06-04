@@ -30,7 +30,7 @@ def retrieve_single_image(image_file, d_threshold):
     the retrieved images to evaluation folder"""
     retrieved, dist = retrieve_image(image_file, MODEL_FILE, DEPLOY_FILE,
                                      IMAGE_MEAN)
-    if dist[-1] < d_threshold:
+    if dist[-1] < d_threshold and len(dist) > 1:
         # this is a image that has acceptable similar top-5 images
         print('Retrieved image ' + image_file)
         image_name = os.path.basename(image_file)
@@ -38,16 +38,17 @@ def retrieve_single_image(image_file, d_threshold):
         eval_res_dir = os.path.join(EVAL_PATH, image_name)
         if not os.path.exists(eval_res_dir):
             os.mkdir(eval_res_dir)
-            image_id = 0
-            for similar_img in retrieved:
-                img_name = os.path.basename(similar_img)
-                res_img = '_'.join([str(image_id), img_name])
-                res_img = os.path.join(eval_res_dir, res_img)
-                subprocess.call(['cp', similar_img, res_img])
-                image_id += 1
+
+        image_id = 0
+        for similar_img in retrieved:
+            img_name = os.path.basename(similar_img)
+            res_img = '_'.join([str(image_id), img_name])
+            res_img = os.path.join(eval_res_dir, res_img)
+            subprocess.call(['cp', similar_img, res_img])
+            image_id += 1
 
 
-def eval_shoes7k(d_threshold=3):
+def eval_shoes7k(d_threshold=2):
     """Evaluate through all positive images"""
     if not os.path.exists(EVAL_PATH):
         os.mkdir(EVAL_PATH)
