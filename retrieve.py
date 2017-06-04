@@ -1,12 +1,11 @@
 '''
 Image retrieval
 '''
+import os
 import numpy as np
 from sklearn.neighbors import KDTree
 
-from convert_shoes7k_data import get_images
 from layer_features import layer_features
-import config
 
 
 def binary_hash_codes(feature_mat):
@@ -20,55 +19,13 @@ def binary_hash_codes(feature_mat):
     return code_mat
 
 
-def generate_feature_matrix(model_file, deploy_file, imagemean_file):
-    """generate feature matrix of image dataset
-    save the matrix as npy file"""
-    # get image files
-    pos_images = get_images(config.eg_shoes7k_pos_path)
-    neg_images = get_images(config.eg_shoes7k_neg_path)
-
-    image_files = np.concatenate((pos_images, neg_images))
-    np.random.shuffle(image_files)
-
-    # feed the network and get feature vectors
-    feature_mat = {'fc7': [], 'latent': []}
-
-    batch = []
-    batch_size = 0
-    for image in image_files:
-        batch.append(image)
-        batch_size += 1
-
-        if batch_size == 1000:
-            for layer, mat in layer_features(feature_mat.keys(), model_file,
-                                             deploy_file, imagemean_file,
-                                             batch):
-                if layer == 'latent':
-                    mat = binary_hash_codes(mat)
-
-                feature_mat[layer].extend(mat)
-
-            batch = []
-            batch_size = 0
-
-    if batch_size > 0:
-        for layer, mat in layer_features(feature_mat.keys(), model_file,
-                                         deploy_file, imagemean_file, batch):
-            if layer == 'latent':
-                mat = binary_hash_codes(mat)
-
-            feature_mat[layer].extend(mat)
-
-    # save to npy files
-    np.save('image_files.npy', image_files)
-    for layer in feature_mat.keys():
-        np.save(layer + '_features.npy', np.array(feature_mat[layer]))
-
-
-def retrieve_image(target_image, model_file, deploy_file, imagemean_file, threshold=1):
-    image_files = np.load('image_files.npy')
-    fc7_feature_mat = np.load('fc7_features.npy')
-    latent_feature_mat = np.load('latent_features.npy')
+def retrieve_image(target_image, model_file, deploy_file, imagemean_file,
+                   threshold=1):
+    model_dir = os.path.dirname(model_file)
+    image_files = np.load(os.path.join(model_dir, 'image_files.npy'))
+    fc7_feature_mat = np.load(os.path.join(model_dir, 'fc7_features.npy'))
+    latent_feature_file = os.path.join(model_dir, 'latent_features.npy')
+    latent_feature_mat = np.load(latent_feature_file)
 
     candidates = []
     for layer, mat in layer_features(['latent', 'fc7'], model_file,
@@ -80,7 +37,8 @@ def retrieve_image(target_image, model_file, deploy_file, imagemean_file, thresh
             mat = mat * np.ones((latent_feature_mat.shape[0], 1))
             dis_mat = np.abs(mat - latent_feature_mat)
             hamming_dis = np.sum(dis_mat, axis=1)
-            np.save('hamming_dis.npy', hamming_dis)
+            distance_file = os.path.join(model_dir, 'hamming_dis.npy')
+            np.save(distance_file, hamming_dis)
             candidates = np.where(hamming_dis < threshold)[0]
 
         if layer == 'fc7':
@@ -97,17 +55,24 @@ def retrieve_image(target_image, model_file, deploy_file, imagemean_file, thresh
 
 if __name__ == '__main__':
     import sys
-    import os
     if len(sys.argv) != 5:
-        print('Usage: python retrieval.py model_file deploy_file imagemean_file target_image')
+        usage = 'Usage: python retrieve.py' + \
+                ' model_file deploy_file imagemean_file target_image.jpg'
+        print(usage)
     else:
         model_file = sys.argv[1]
         deploy_file = sys.argv[2]
         imagemean_file = sys.argv[3]
         target_image = sys.argv[4]
 
-        if not (os.path.exists('image_files.npy') and os.path.exists('latent_features.npy') and os.path.exists('fc7_features.npy')):
-            generate_feature_matrix(model_file, deploy_file, imagemean_file)
+        is_exists = os.path.exists(model_file) and os.path.exists(deploy_file)\
+            and os.path.exists(imagemean_file)
 
-        res = retrieve_image(target_image, model_file, deploy_file, imagemean_file, threshold=5)
-        print(res)
+        if is_exists:
+            res = retrieve_image(target_image, model_file, deploy_file,
+                                 imagemean_file, threshold=5)
+            print(res)
+        else:
+            print('The model related files may not exit')
+            print('Please check files: {}, {}, {}'
+                  .format(model_file, deploy_file, imagemean_file))
