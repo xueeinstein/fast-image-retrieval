@@ -99,3 +99,15 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# local config
+config.cfg
+
+# caffe model files
+*.caffemodel
+*.solverstate
+
+# dataset files
+*_lmdb/
+*.binaryproto
+*.npy
