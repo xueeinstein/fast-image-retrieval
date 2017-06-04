@@ -28,6 +28,7 @@ def retrieve_image(target_image, model_file, deploy_file, imagemean_file,
     latent_feature_mat = np.load(latent_feature_file)
 
     candidates = []
+    dist = 0
     for layer, mat in layer_features(['latent', 'fc7'], model_file,
                                      deploy_file, imagemean_file,
                                      [target_image], show_pred=True):
@@ -45,12 +46,15 @@ def retrieve_image(target_image, model_file, deploy_file, imagemean_file,
             # fine-level search
             kdt = KDTree(fc7_feature_mat[candidates], metric='euclidean')
             k = 6
-            if candidates.shape[0] > 6:
-                dist, idxs = kdt.query(mat, k=k)
-                candidates = candidates[idxs]
-                print(dist)
 
-    return image_files[candidates]
+            if not candidates.shape[0] > 6:
+                k = candidates.shape[0]
+
+            dist, idxs = kdt.query(mat, k=k)
+            candidates = candidates[idxs]
+            print(dist)
+
+    return image_files[candidates][0], dist[0]
 
 
 if __name__ == '__main__':
@@ -69,8 +73,8 @@ if __name__ == '__main__':
             and os.path.exists(imagemean_file)
 
         if is_exists:
-            res = retrieve_image(target_image, model_file, deploy_file,
-                                 imagemean_file, threshold=5)
+            res, _ = retrieve_image(target_image, model_file, deploy_file,
+                                    imagemean_file, threshold=5)
             print(res)
         else:
             print('The model related files may not exit')
