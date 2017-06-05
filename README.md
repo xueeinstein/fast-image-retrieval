@@ -12,6 +12,8 @@ shoes7k_neg_path: /path/to/datasets/shoes7k/classificationNeg
 
 ## Run Examples
 
+### Shoes7k
+
 To run example on shoes7k dataset, firstly, you need to convert shoes7k dataset to LMDB dataset.
 
 ```
@@ -32,3 +34,13 @@ Next, you can retrieve similar image `target.jpg` using
 ```
 
 Note that the first retrival procedure might be very slow because the program reads all shoes7k images and generate feature matrix. The later retrivals can be very fast.
+
+Evaluate over the whole dataset by using
+
+```
+python ./examples/shoes7k/eval.py
+```
+
+Some retrieval results:
+
+![shoes7k retrieval](img/shoes7k_retrieval.png)
