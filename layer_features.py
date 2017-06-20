@@ -21,10 +21,13 @@ def feed_net(model_file, deploy_file, imagemean_file, image_files, show_pred):
 
     idx = 0
     for image in image_files:
-        im = caffe.io.load_image(image)
-        transformed_im = transformer.preprocess('data', im)
-        net.blobs['data'].data[idx, :, :, :] = transformed_im
-        idx += 1
+        try:
+            im = caffe.io.load_image(image)
+            transformed_im = transformer.preprocess('data', im)
+            net.blobs['data'].data[idx, :, :, :] = transformed_im
+            idx += 1
+        except Exception:
+            pass
 
     out = net.forward()
     if show_pred:
