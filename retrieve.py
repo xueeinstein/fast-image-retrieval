@@ -2,6 +2,7 @@
 Image retrieval
 '''
 import os
+import subprocess
 import numpy as np
 from sklearn.neighbors import KDTree
 
@@ -76,6 +77,10 @@ if __name__ == '__main__':
             res, _ = retrieve_image(target_image, model_file, deploy_file,
                                     imagemean_file, threshold=5)
             print(res)
+            if not os.path.exists('results'):
+                os.mkdir('results')
+            for i in range(len(res)):
+                subprocess.call(['cp', res[i], 'results/%s.jpg' % str(i)])
         else:
             print('The model related files may not exit')
             print('Please check files: {}, {}, {}'
