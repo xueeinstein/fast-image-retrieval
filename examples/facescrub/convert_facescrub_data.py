@@ -52,6 +52,23 @@ def get_images(names, ratio, label, train_images, train_labels,
                 test_labels.append(label)
 
 
+def get_all_images():
+    actors = get_names(ACTORS)
+    actresses = get_names(ACTRESS)
+    names = np.concatenate((actors, actresses))
+    all_images = []
+    for name in names:
+        folder = '_'.join(name.split())
+        folder = os.path.join(DOWNLOAD, folder, 'face')
+
+        faces = os.listdir(folder)
+        for face in faces:
+            face = os.path.join(folder, face)
+            all_images.append(face)
+
+    return np.array(all_images)
+
+
 def get_tr_te_images(ratio):
     """get training and test images for two classes"""
     train_images, train_labels = [], []
